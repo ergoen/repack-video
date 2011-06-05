@@ -13,5 +13,5 @@ Change the value of the "(Default)" string value to the scripts location with a 
 "U:\repack.bat" "%1"
 Now you can right click on any file and press repack. (Will only work on mkv-files with h264 video in them though)
 
-USAGE
+MANUAL USAGE
 repack.bat filename.mkv
