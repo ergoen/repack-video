@@ -1,0 +1,15 @@
+Application to repack video from mkv to mp4 and reencode audio to stereo aac.
+
+INSTALL
+Download the following files into suitable directories:
+
+eac3to (http://www.videohelp.com/tools/eac3to)
+mp4box (http://www.videohelp.com/tools/mp4box)
+neroAacEnc (http://www.nero.com/eng/downloads-nerodigital-nero-aac-codec.php)
+
+Modify the paths at the top of the repack.bat file to suit your locations.
+Also make an empty "temp" folder where the script can place intermediate files and set that too.
+
+
+USAGE
+repack.bat filename.mkv
