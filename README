@@ -10,6 +10,14 @@ neroAacEnc (http://www.nero.com/eng/downloads-nerodigital-nero-aac-codec.php)
 Modify the paths at the top of the repack.bat file to suit your locations.
 Also make an empty "temp" folder where the script can place intermediate files and set that too.
 
+ADDING TO RIGHT-CLICK MENU
+Run regedit.
+Go to HKEY_CLASSES_ROOT\*\shell.
+Add a new key "repack".
+Inside that add another key "Command".
+Change the value of the "(Default)" string value to the scripts location with a "%1" behind it, like:
+"U:\repack.bat" "%1"
+Now you can right click on any file and press repack. (Will only work on mkv-files with h264 video in them though)
 
 USAGE
 repack.bat filename.mkv
