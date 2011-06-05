@@ -1,0 +1,101 @@
+Index: libavcodec/ac3dec.c
+===================================================================
+--- libavcodec/ac3dec.c	(Revision 23802)
++++ libavcodec/ac3dec.c	(Arbeitskopie)
+@@ -195,14 +195,19 @@
+     dsputil_init(&s->dsp, avctx);
+     av_lfg_init(&s->dith_state, 0);
+ 
+-    /* set bias values for float to int16 conversion */
+-    if(s->dsp.float_to_int16_interleave == ff_float_to_int16_interleave_c) {
+-        s->add_bias = 385.0f;
+-        s->mul_bias = 1.0f;
+-    } else {
+-        s->add_bias = 0.0f;
+-        s->mul_bias = 32767.0f;
+-    }
++    #ifdef CONFIG_AUDIO_FULL
++      s->add_bias = 0.0f;
++      s->mul_bias = 1.0f;
++    #else
++      /* set bias values for float to int16 conversion */
++      if(s->dsp.float_to_int16_interleave == ff_float_to_int16_interleave_c) {
++          s->add_bias = 385.0f;
++          s->mul_bias = 1.0f;
++      } else {
++          s->add_bias = 0.0f;
++          s->mul_bias = 32767.0f;
++      }
++    #endif
+ 
+     /* allow downmixing to stereo or mono */
+     if (avctx->channels > 0 && avctx->request_channels > 0 &&
+@@ -219,7 +224,11 @@
+             return AVERROR(ENOMEM);
+     }
+ 
+-    avctx->sample_fmt = SAMPLE_FMT_S16;
++    #ifdef CONFIG_AUDIO_FULL
++      avctx->sample_fmt = SAMPLE_FMT_FLT;
++    #else
++      avctx->sample_fmt = SAMPLE_FMT_S16;
++    #endif
+     return 0;
+ }
+ 
+@@ -1259,11 +1268,13 @@
+     /* apply scaling to coefficients (headroom, dynrng) */
+     for(ch=1; ch<=s->channels; ch++) {
+         float gain = s->mul_bias / 4194304.0f;
+-        if(s->channel_mode == AC3_CHMODE_DUALMONO) {
+-            gain *= s->dynamic_range[2-ch];
+-        } else {
+-            gain *= s->dynamic_range[0];
+-        }
++        #ifndef CONFIG_AUDIO_NODRC
++          if(s->channel_mode == AC3_CHMODE_DUALMONO) {
++              gain *= s->dynamic_range[2-ch];
++          } else {
++              gain *= s->dynamic_range[0];
++          }
++        #endif
+         s->dsp.int32_to_float_fmul_scalar(s->transform_coeffs[ch], s->fixed_coeffs[ch], gain, 256);
+     }
+ 
+@@ -1316,7 +1327,11 @@
+     const uint8_t *buf = avpkt->data;
+     int buf_size = avpkt->size;
+     AC3DecodeContext *s = avctx->priv_data;
+-    int16_t *out_samples = (int16_t *)data;
++    #ifdef CONFIG_AUDIO_FULL
++      float *out_samples = (float *)data;
++    #else
++      int16_t *out_samples = (int16_t *)data;
++    #endif
+     int blk, ch, err;
+     const uint8_t *channel_map;
+     const float *output[AC3_MAX_CHANNELS];
+@@ -1416,10 +1431,20 @@
+             av_log(avctx, AV_LOG_ERROR, "error decoding the audio block\n");
+             err = 1;
+         }
+-        s->dsp.float_to_int16_interleave(out_samples, output, 256, s->out_channels);
+-        out_samples += 256 * s->out_channels;
++        #ifdef CONFIG_AUDIO_FULL
++          {
++            int i;
++            /* interleave output samples */
++            for (i = 0; i < 256; i++)
++                for (ch = 0; ch < s->out_channels; ch++)
++                    *(out_samples++) = s->output[ch][i];
++          }
++        #else
++          s->dsp.float_to_int16_interleave(out_samples, output, 256, s->out_channels);
++          out_samples += 256 * s->out_channels;
++        #endif
+     }
+-    *data_size = s->num_blocks * 256 * avctx->channels * sizeof (int16_t);
++    *data_size = s->num_blocks * 256 * avctx->channels * sizeof (out_samples[0]);
+     return FFMIN(buf_size, s->frame_size);
+ }
+ 

@@ -1,9 +1,11 @@
 ::@echo off
 set inputfile=%~1
-set eac3to=U:\encode2\megui\tools\eac3to\eac3to.exe
-set mp4box=U:\encode2\megui\tools\mp4box\MP4Box.exe
-set neroaac=U:\encode2\megui\neroAacEnc.exe
-set temppath=U:\temp
+set pth=%~dp0
+set eac3to="%pth%eac3to\eac3to.exe"
+set mp4box="%pth%mp4box\MP4Box.exe"
+set neroaac="%pth%neroAacEnc.exe"
+
+set temppath=%temp%
 
 :: Unpack the mkv (first track assumed video, second assumed audio)
 %eac3to% "%inputfile%" 1: %temppath%\video.h264
